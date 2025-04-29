@@ -6,10 +6,10 @@ const int IO_BURST_RANGE[3] = {0, 10, 30};
 const int IO_TIME_LOWER_RANGE[3] = {0, 1, 3};
 const int IO_TIME_UPPER_RANGE[3] = {0, 2, 5};
 // composition scenario of p_types 
-const int P_TYPE_DIST[3][3] = {{100, 0, 0}, {33, 34, 33}, {0, 50, 50}};
+const int P_TYPE_DIST[3][3] = {{100, 0, 0}, {50, 50, 0}, {0, 50, 50}};
 
 // generate p_type with given scenario
-enum P_Type Generate_P_Type(const int* dist){
+P_Type Generate_P_Type(const int* dist){
     try_and_abort(((dist[0] == 0 && dist[1] == 0 && dist[2] == 0) || dist[0] < 0 || dist[1] < 0 || dist[2] < 0),
     "Generate_P_Type(): invalid scenario");
 
@@ -20,7 +20,7 @@ enum P_Type Generate_P_Type(const int* dist){
 }
 
 // generate process with given p_type, pid
-Process Generate_Process(enum P_Type p_type, int _pid){
+Process Generate_Process(P_Type p_type, int _pid){
     Process p;
 
     p.pid = _pid;
@@ -48,7 +48,7 @@ Process* Generate_Process_List(const int* p_type_dist, int n_process, int random
     
     srand(random_seed);
     for(int i=0; i<n_process; i++){
-        enum P_Type p_type = Generate_P_Type(p_type_dist);
+        P_Type p_type = Generate_P_Type(p_type_dist);
         ps[i] = Generate_Process(p_type, i);
     }
     return ps;

@@ -13,9 +13,8 @@ P_Queue PQ_Create(int n_process){
 void PQ_Delete(P_Queue *pq){free(pq -> data);}
 
 void PQ_Node_Deep_Copy(PQ_Node *to, PQ_Node *from){
-    to -> p = from -> p;
+    to -> pid = from -> pid;
     to -> key = from -> key;
-    to -> lasting = from -> lasting;
 }
 
 void PQ_Swap(P_Queue *pq, int i1, int i2){
@@ -27,11 +26,11 @@ void PQ_Swap(P_Queue *pq, int i1, int i2){
 }
 
 // push new (process, key) to priority queue
-void PQ_Push(P_Queue *pq, Process _p, int _key, int _lasting){
+void PQ_Push(P_Queue *pq, int _pid, int _key){
     // full queue exception
     try_and_abort((pq -> last >= pq -> size), "PQ_push(): full queue");
 
-    PQ_Node new_node; new_node.p = _p; new_node.key = _key; new_node.lasting = _lasting;
+    PQ_Node new_node; new_node.pid = _pid; new_node.key = _key;
     int pos = pq -> last;
     pq -> data[pos] = new_node;
     while(pos > 0){
@@ -47,9 +46,9 @@ void PQ_Push(P_Queue *pq, Process _p, int _key, int _lasting){
 }
 
 // pop process from priority queue
-Process PQ_Pop(P_Queue *pq){
-    // empty queue: return invalid process - outside function should handle
-    if (pq -> last == 0){ Process p; p.pid = -1; return p; }
+int PQ_Pop(P_Queue *pq){
+    // empty queue: return invalid pid - outside function should handle
+    if (pq -> last == 0) return -1;
 
     (pq -> last)--;
     PQ_Swap(pq, 0, pq -> last);
@@ -67,7 +66,7 @@ Process PQ_Pop(P_Queue *pq){
         else break;
     }
 
-    return pq -> data[pq -> last].p;
+    return pq -> data[pq -> last].pid;
 }
 
 bool PQ_isEmpty(P_Queue *pq) {return (pq->last == 0); }

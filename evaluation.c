@@ -7,20 +7,20 @@ Gantt Create_Gantt_Chart(Report r){
 
     int pos = 0;
     for(int i=0; i<r.total_time - 1; i++){
-        Chart_Node c1 = r.chart[i], c2 = r.chart[i+1];
+        int p1 = r.chart[i].pid_in_cpu, p2 = r.chart[i+1].pid_in_cpu;
 
-        if(c1.size_ready == 0 && c2.size_ready != 0){
-            gantt.chart[gantt.size].pid = c2.pid_ready[0];
+        if(p1 == -1 && p2 != -1){
+            gantt.chart[gantt.size].pid = p2;
             gantt.chart[gantt.size].start = i+1;
         }
-        else if(c1.size_ready != 0 && c2.size_ready == 0){
+        else if(p1 != -1 && p2 == -1){
             gantt.chart[gantt.size].end = i+1;
             gantt.size += 1;
         }
-        else if(c1.pid_ready[0] != c2.pid_ready[0]){
+        else if(p1 != p2){
             gantt.chart[gantt.size].end = i+1;
             gantt.size += 1;
-            gantt.chart[gantt.size].pid = c2.pid_ready[0];
+            gantt.chart[gantt.size].pid = p2;
             gantt.chart[gantt.size].start = i+1;
         }
     }

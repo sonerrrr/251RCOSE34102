@@ -17,3 +17,5 @@ int rand_int(int min, int max){
 // get parent, child index of full binary tree: starting from index 0
 int get_parent(int i) {return (i + 1) / 2 - 1;}
 int get_first_child(int i) {return (i + 1) * 2 - 1;}
+
+int min(int a, int b) {if(a < b) return a; else return b;}
