@@ -69,4 +69,4 @@ int PQ_Pop(P_Queue *pq){
     return pq -> data[pq -> last].pid;
 }
 
-bool PQ_isEmpty(P_Queue *pq) {return (pq->last == 0); }
+bool PQ_isEmpty(P_Queue pq) {return (pq.last == 0); }

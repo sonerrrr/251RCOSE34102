@@ -41,17 +41,19 @@ Process Generate_Process(P_Type p_type, int _pid){
 }
 
 // generate multiple processes with p_type composition scenario
-Process* Generate_Process_List(const int* p_type_dist, int n_process, int random_seed){
+Process_List Generate_Process_List(const int* p_type_dist, int n_process, int random_seed){
     try_and_abort((n_process < 0), "Generate_Process_List(): n_process < 0");
 
-    Process* ps = malloc(sizeof(Process) * n_process);
-    
+    Process_List pl;
+    pl.p_list = malloc(sizeof(Process) * n_process);
+    pl.n_process = n_process;
+
     srand(random_seed);
     for(int i=0; i<n_process; i++){
         P_Type p_type = Generate_P_Type(p_type_dist);
-        ps[i] = Generate_Process(p_type, i);
+        pl.p_list[i] = Generate_Process(p_type, i);
     }
-    return ps;
+    return pl;
 }
 
 /*Process Deep_Copy_Process(Process from){
@@ -78,9 +80,9 @@ Process* Deep_Copy_Process_List(Process* from, int n_process){
 }*/
 
 // free all memory allocation during process generation
-void Free_All_Processes(Process* ps, int n_process){
-    for(int i=0; i<n_process; i++){
-        free(ps[i].bursts);
+void Release_Process_List(Process_List *pl){
+    for(int i=0; i<pl->n_process; i++){
+        free(pl->p_list[i].bursts);
     }
-    free(ps);
+    free(pl->p_list);
 }

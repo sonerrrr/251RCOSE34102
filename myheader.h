@@ -34,10 +34,15 @@ typedef struct __Process {
     int priority;
 } Process;
 
+typedef struct __Process_list {
+    int n_process;
+    Process* p_list;
+} Process_List;
+
 P_Type Generate_P_Type(const int*);
 Process Generate_Process(P_Type, int);
-Process* Generate_Process_List(const int*, int, int);
-void Free_All_Processes(Process*, int);
+Process_List Generate_Process_List(const int* p_type_dist, int n_process, int random_seed);
+void Release_Process_List(Process_List *pl);
 
 // priority queue
 // each node of P_Queue.data
@@ -58,7 +63,7 @@ void PQ_Node_Deep_Copy(PQ_Node *to, PQ_Node *from);
 void PQ_Swap(P_Queue *pq, int i1, int i2);
 void PQ_Push(P_Queue *pq, int _pid, int _key);
 int PQ_Pop(P_Queue *pq);
-bool PQ_isEmpty(P_Queue *pq);
+bool PQ_isEmpty(P_Queue pq);
 
 // scheduler
 #define MAX_CHART_LENGTH 1000
@@ -78,6 +83,7 @@ typedef struct __Chart_Node{
     int *pid_arrived, *pid_ready, *pid_wait;
     int size_arrived, size_ready, size_wait;
     int pid_in_cpu, pid_in_io;
+    int cpu_burst_left, io_burst_left;
 } Chart_Node;
 
 typedef struct __Record_Node{
@@ -94,12 +100,12 @@ typedef struct __Report{
     Record_Node *record;
 }Report;
 
-void Increment_Waiting_Time(Report *r, P_Queue *ready);
-Chart_Node Capture(P_Queue* arrival, P_Queue* ready, P_Queue* wait, int pid_in_cpu, int pid_in_io);
-void Push_Ready_Queue(Report *r, P_Queue *ready, Process* ps, int pid, int time, Sch_Alg sch_alg, int time_quantum);
-void Check_Preemption(Report *r, P_Queue *ready, Process *ps, int *pid_in_cpu, Sch_Alg sch_alg);
-void Scheduler_Subroutine(Report *r, P_Queue* arrival, P_Queue* ready, P_Queue* wait, Process* ps, int n_process, Sch_Alg sch_alg, int time_quantum);
-Report Scheduler(Process* ps, int n_process, Sch_Alg sch_alg, int time_quantum);
+void Increment_Waiting_Time(Report *r, P_Queue ready);
+Chart_Node Capture(P_Queue arrival, P_Queue ready, P_Queue wait, Report r, int pid_in_cpu, int pid_in_io);
+void Push_Ready_Queue(Report *r, P_Queue *ready, Process_List pl, int pid, int time, Sch_Alg sch_alg, int time_quantum);
+void Check_Preemption(Report *r, P_Queue *ready, Process_List pl, int *pid_in_cpu, Sch_Alg sch_alg);
+void Initialize_Scheduler(Report *r, P_Queue *arrival, P_Queue *ready, P_Queue *wait, Process_List pl);
+Report Scheduler(Process_List pl, Sch_Alg sch_alg, int time_quantum);
 void Release_Report(Report *r);
 
 // evaluation
@@ -119,7 +125,7 @@ Gantt Create_Gantt_Chart(Report r);
 void Release_Gantt_Chart(Gantt *g);
 
 // debugging
-void Debug_Print_Processes(Process* ps, int n_process);
+void Debug_Print_Processes(Process_List pl);
 void Debug_Print_P_Queue(P_Queue pq);
 void Debug_Print_Chart_Node(Chart_Node n, int t);
 void Debug_Print_Report(Report r);
