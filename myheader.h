@@ -54,7 +54,7 @@ void Release_Process_List(Process_List *pl);
 // each node of P_Queue.data
 typedef struct __PQ_Node{
     int pid;
-    int key;
+    int key[3];
 } PQ_Node;
 
 typedef struct __P_Queue{
@@ -65,9 +65,10 @@ typedef struct __P_Queue{
 
 P_Queue PQ_Create(int n_process);
 void PQ_Delete(P_Queue *pq);
+bool PQ_Compare_Key(int* l, int* r);
 void PQ_Node_Deep_Copy(PQ_Node *to, PQ_Node *from);
 void PQ_Swap(P_Queue *pq, int i1, int i2);
-void PQ_Push(P_Queue *pq, int _pid, int _key);
+void PQ_Push(P_Queue *pq, int _pid, int* _key);
 int PQ_Pop(P_Queue *pq);
 bool PQ_isEmpty(P_Queue pq);
 
@@ -112,8 +113,9 @@ typedef struct __Report{
 
 void Increment_Waiting_Time(Report *r, P_Queue ready);
 Chart_Node Capture(P_Queue arrival, P_Queue ready, P_Queue wait, Report r, int pid_in_cpu, int pid_in_io);
+void Generate_Key(int *key, Report *r, int pid, int time, Sch_Alg sch_alg);
 void Push_Ready_Queue(Report *r, P_Queue *ready, int pid, int time, Sch_Alg sch_alg, int time_quantum);
-void Check_Preemption(Report *r, P_Queue *ready, int *pid_in_cpu, Sch_Alg sch_alg);
+void Check_Preemption(Report *r, P_Queue *ready, int *pid_in_cpu, int time, Sch_Alg sch_alg);
 void Initialize_Scheduler(Report *r, P_Queue *arrival, P_Queue *ready, P_Queue *wait, Process_List pl, bool need_capture);
 Report Scheduler(Process_List pl, Sch_Alg sch_alg, int time_quantum, bool need_capture);
 void Release_Report(Report *r, bool need_capture);

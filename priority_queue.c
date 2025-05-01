@@ -14,7 +14,16 @@ void PQ_Delete(P_Queue *pq){free(pq -> data);}
 
 void PQ_Node_Deep_Copy(PQ_Node *to, PQ_Node *from){
     to -> pid = from -> pid;
-    to -> key = from -> key;
+    for(int i=0; i<3; i++) to -> key[i] = from -> key[i];
+}
+
+// return true when left key is smaller in value (higher in priority)
+bool PQ_Compare_Key(int* l, int* r){
+    for(int i=0; i<3; i++){
+        if(l[i] < r[i]) return true;
+        else if(l[i] > r[i]) return false;
+    }
+    return false;
 }
 
 void PQ_Swap(P_Queue *pq, int i1, int i2){
@@ -26,17 +35,18 @@ void PQ_Swap(P_Queue *pq, int i1, int i2){
 }
 
 // push new (process, key) to priority queue
-void PQ_Push(P_Queue *pq, int _pid, int _key){
+void PQ_Push(P_Queue *pq, int _pid, int* _key){
     // full queue exception
     try_and_abort((pq -> last >= pq -> size), "PQ_push(): full queue");
 
-    PQ_Node new_node; new_node.pid = _pid; new_node.key = _key;
+    PQ_Node new_node; new_node.pid = _pid;
+    for(int i=0; i<3; i++) new_node.key[i] = _key[i];
     int pos = pq -> last;
     pq -> data[pos] = new_node;
     while(pos > 0){
         int parent = get_parent(pos);
-
-        if(pq -> data[pos].key < pq -> data[parent].key){
+        
+        if(PQ_Compare_Key(pq->data[pos].key, pq->data[parent].key)){
             PQ_Swap(pq, pos, parent);
             pos = parent;
         }
@@ -58,8 +68,8 @@ int PQ_Pop(P_Queue *pq){
         int child1 = get_first_child(pos), child2 = child1 + 1;
         int min_child = child1;
         
-        if(pq -> data[child1].key > pq -> data[child2].key && child2 <= pq->last - 1) min_child = child2;
-        if(pq -> data[min_child].key < pq -> data[pos].key){
+        if(PQ_Compare_Key(pq -> data[child2].key, pq->data[child1].key) && child2 <= pq->last - 1) min_child = child2;
+        if(PQ_Compare_Key(pq -> data[min_child].key , pq -> data[pos].key)){
             PQ_Swap(pq, pos, min_child);
             pos = min_child;
         }

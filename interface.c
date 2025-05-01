@@ -234,7 +234,7 @@ int Multiple_Test(){
     if(p_dist_type == -1) return -1;
     n_process = Select_Number("Input number of processes to generate (1 ~ 50): ", 1, 50);
     if(n_process == -1) return -1;
-    n_iteration = Select_Number("Input number of iteration (1 ~ 100): ", 1, 100);
+    n_iteration = Select_Number("Input number of iteration (1 ~ 1000): ", 1, 1000);
     if(n_iteration == -1) return -1;
     time_quantum = Select_Number("RR scheduling: Input size of time quantum (3 ~ 50): ", 3, 50);
 
@@ -266,8 +266,9 @@ int Multiple_Test(){
         }
 
         Release_Process_List(&pl);
-        if((i+1)%10 == 0) printf("[Iteration %d] complete\n", i+1);
+        if((i+1)%100 == 0) printf("[Iteration %d] complete\n", i+1);
     }
+    printf("Test Complete\n");
 
     for(int i=0; i<N_ALGORITHM*2; i++) fclose(fps[i]);
     free(fps);

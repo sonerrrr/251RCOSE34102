@@ -13,7 +13,9 @@ void Display_Processes(Process_List pl){
 
 void Display_P_Queue(P_Queue pq){
     for(int i=0; i<pq.size; i++){
-        printf("[Node %d] pid: %d | key: %d\n", i, pq.data[i].pid, pq.data[i].key);
+        printf("[Node %d] pid: %d | key:", i, pq.data[i].pid);
+        for(int j=0; j<3; j++) printf("[%d] %d ", j, pq.data[i].key[j]);
+        printf("\n");
     }
 }
 
@@ -69,6 +71,6 @@ void Display_Analysis(Analysis a){
     printf("Summarized analysis:\n");
     printf("Turnaround time:\n");
     Display_Analysis_item(a.turnaround);
-    printf("Waiting time: ");
+    printf("Waiting time:\n");
     Display_Analysis_item(a.waiting);
 }

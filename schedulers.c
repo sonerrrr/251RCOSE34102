@@ -31,25 +31,38 @@ Chart_Node Capture(P_Queue arrival, P_Queue ready, P_Queue wait, Report r, int p
     return n;
 }
 
-// select key and session_remained value according to scheduling algorithm
-void Push_Ready_Queue(Report *r, P_Queue *ready, int pid, int time, Sch_Alg sch_alg, int time_quantum){
+// select key value according to scheduling algorithm
+void Generate_Key(int *key, Report *r, int pid, int time, Sch_Alg sch_alg){
     switch(sch_alg){
+        // FCFS: eariler arrival time -> high priority / tie-breaker: smaller pid
         case FCFS:
-            PQ_Push(ready, pid, time);
+            key[0] = time; key[1] = pid; key[2] = 0;
             break;
+        // SJF: smaller burst time -> high priority / tie-breaker: ready queue arrival time, smaller pid
         case SJF_NONPREMP:
         case SJF_PREMP:
-            PQ_Push(ready, pid, r->record[pid].burst_remained);
+            key[0] = r->record[pid].burst_remained; key[1] = time; key[2] = pid;
             break;
+        // Priority based: smaller priority number -> high priority / tie-breaker: ready queue arival time, smaller pid
         case PRIORITY_NONPREMP:
         case PRIORITY_PREMP:
-            PQ_Push(ready, pid, r->record[pid].priority);
+            key[0] = r->record[pid].priority; key[1] = time; key[2] = pid;
             break;
+        // RR: eariler arrival time -> high priority / tie-breaker: smaller pid
         case RR:
-            PQ_Push(ready, pid, time);
+            key[0] = time; key[1] = pid; key[2] = 0;
             break;
     }
+}
 
+// select key and session_remained value according to scheduling algorithm
+void Push_Ready_Queue(Report *r, P_Queue *ready, int pid, int time, Sch_Alg sch_alg, int time_quantum){
+    int key[3];
+    Generate_Key(key, r, pid, time, sch_alg);
+    PQ_Push(ready, pid, key);
+
+    // except RR: session time = remained burst time
+    // RR: min(time_quantum, remained burst time)
     switch(sch_alg){
         case RR:
             r->record[pid].session_remained = min(r->record[pid].burst_remained, time_quantum);
@@ -61,28 +74,25 @@ void Push_Ready_Queue(Report *r, P_Queue *ready, int pid, int time, Sch_Alg sch_
 }
 
 // check and perform preemption
-void Check_Preemption(Report *r, P_Queue *ready, int *pid_in_cpu, Sch_Alg sch_alg){
+void Check_Preemption(Report *r, P_Queue *ready, int *pid_in_cpu, int time, Sch_Alg sch_alg){
     if(*pid_in_cpu == -1 || PQ_isEmpty(*ready)) return;
 
     // p1: process running on CPU, p2: process on the top of ready queue
     int p1 = *pid_in_cpu;
     int p2 = ready->data[0].pid;
+    int key[3], k1[3], k2[3];
 
-    if(sch_alg == SJF_PREMP){
-        if(r->record[p1].burst_remained > r->record[p2].burst_remained){
+    if(sch_alg == SJF_PREMP || sch_alg == PRIORITY_PREMP){
+        Generate_Key(k1, r, p1, time, sch_alg);
+        Generate_Key(k2, r, p2, time, sch_alg);
+        // Preemption also includes tie-breaker criterion
+        if(PQ_Compare_Key(k2, k1)){
             PQ_Pop(ready);
             *pid_in_cpu = p2;
             r->record[p2].session_remained = r->record[p2].burst_remained;
-            PQ_Push(ready, p1, r->record[p1].burst_remained);
-        }
-    }
 
-    if(sch_alg == PRIORITY_PREMP){
-        if(r->record[p1].priority > r->record[p2].priority){
-            PQ_Pop(ready);
-            *pid_in_cpu = p2;
-            r->record[p2].session_remained = r->record[p2].burst_remained;
-            PQ_Push(ready, p1, r->record[p1].priority);
+            Generate_Key(key, r, p1, time, sch_alg);
+            PQ_Push(ready, p1, key);
         }
     }
 }
@@ -115,12 +125,16 @@ Report Scheduler(Process_List pl, Sch_Alg sch_alg, int time_quantum, bool need_c
     Initialize_Scheduler(&r, &arrival, &ready, &wait, pl, need_capture);
 
     // generate arrival queue
-    for(int i=0; i<pl.n_process; i++){ PQ_Push(&arrival, i, pl.p_list[i].arrival_time); }
+    for(int i=0; i<pl.n_process; i++){
+        int key[3] = {pl.p_list[i].arrival_time, 0, 0};
+        PQ_Push(&arrival, i, key);
+    }
 
     // main routine
     int time = 0; // current time
     int terminated = 0; // number of terminated process
     int pid_in_cpu = -1, pid_in_io = -1; // pid of now running on CPU / I/O device
+    int key[3];
 
     // until all process terminate or exceed simulation limit
     while(terminated < pl.n_process && time < MAX_SIMULATION_TIME){
@@ -128,7 +142,7 @@ Report Scheduler(Process_List pl, Sch_Alg sch_alg, int time_quantum, bool need_c
         1) move out from CPU
         - prevent preemption of a process which has to be removed from CPU (session_remained = 0) at the first place
         - CPU -> ready queue(session expired only), wait queue(switch to I/O burst), termination(all bursts end)
-        2) I/O -> ready queue(all processes should have CPU burst in the end): preemption might occur
+        2) I/O -> ready queue(all processes should have CPU burst at the end): preemption might occur
         3) push newly arrived processes into ready queue : preemption might occur
         4) load new process to CPU and I/O if needed 
         5) capture & time progress
@@ -145,13 +159,15 @@ Report Scheduler(Process_List pl, Sch_Alg sch_alg, int time_quantum, bool need_c
                     terminated++;
                 }
                 // moves to I/O burst
+                // I/O operation: FCFS only
                 else { 
                     int progress = ++r.record[pid_in_cpu].progress;
                     int burst = pl.p_list[pid_in_cpu].bursts[progress];
 
                     r.record[pid_in_cpu].burst_remained = burst;
                     r.record[pid_in_cpu].session_remained = burst;
-                    PQ_Push(&wait, pid_in_cpu, time);
+                    Generate_Key(key, &r, pid_in_cpu, time, FCFS);
+                    PQ_Push(&wait, pid_in_cpu, key);
                 }
             }
             // session ends: push to ready queue again
@@ -160,22 +176,21 @@ Report Scheduler(Process_List pl, Sch_Alg sch_alg, int time_quantum, bool need_c
         }
 
         // check migration of now I/O operating process
-        // I/O operation: FCFS only
         if(pid_in_io != -1 && r.record[pid_in_io].session_remained == 0){
             int progress = ++r.record[pid_in_io].progress;
             int burst = pl.p_list[pid_in_io].bursts[progress];
 
             r.record[pid_in_io].burst_remained = burst;
             Push_Ready_Queue(&r, &ready, pid_in_io, time, sch_alg, time_quantum);
-            Check_Preemption(&r, &ready, &pid_in_cpu, sch_alg);
+            Check_Preemption(&r, &ready, &pid_in_cpu, time, sch_alg);
             pid_in_io = -1;
         }
 
          // migration from arrival to ready (condsider simulataneously arrived processes) 
-         while(!PQ_isEmpty(arrival) && arrival.data[0].key == time){
+         while(!PQ_isEmpty(arrival) && arrival.data[0].key[0] == time){
             int arrived_pid = PQ_Pop(&arrival);
             Push_Ready_Queue(&r, &ready, arrived_pid, time, sch_alg, time_quantum);
-            Check_Preemption(&r, &ready, &pid_in_cpu, sch_alg);
+            Check_Preemption(&r, &ready, &pid_in_cpu, time, sch_alg);
         }
 
         // load from ready/wait queue
