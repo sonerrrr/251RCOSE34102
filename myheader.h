@@ -5,6 +5,10 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <time.h>
+#include <math.h>
+#include <string.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 // general functions
 void try_and_abort(bool, char*);
@@ -16,10 +20,12 @@ int min(int, int);
 // processes
 typedef enum _P_Type { CPU_BOUND = 0, MIXED = 1, IO_BOUND = 2 } P_Type;
 // process generation configuration
+// PRIORITY_RANGE: priority levels are 0 ~ n(PRIORITTY_RANGE), which means n+1 items needed when creating array.
 #define PRIORITY_RANGE 5
 #define ARRIVAL_RANGE 30
 // diverse configuration with process type
-extern const int CPU_BURST_RANGE[3]; 
+extern const int CPU_BURST_LOWER_RANGE[3]; 
+extern const int CPU_BURST_UPPER_RANGE[3];
 extern const int IO_BURST_RANGE[3];
 extern const int IO_TIME_LOWER_RANGE[3];
 extern const int IO_TIME_UPPER_RANGE[3];
@@ -29,7 +35,7 @@ extern const int P_TYPE_DIST[3][3];
 typedef struct __Process {
     int pid;
     int *bursts; // CPU burst, I/O burst time alternating
-    int io_time;
+    int io_time; // number of I/O burst time
     int arrival_time;
     int priority;
 } Process;
@@ -66,19 +72,20 @@ int PQ_Pop(P_Queue *pq);
 bool PQ_isEmpty(P_Queue pq);
 
 // scheduler
-#define MAX_CHART_LENGTH 1000
-#define MAX_SIMULATION_TIME 1000
+#define MAX_CHART_LENGTH 10000
+#define MAX_SIMULATION_TIME 10000
+#define N_ALGORITHM 6
 
 typedef enum _Sch_Alg {
-    FCFS,
-    SJF_NONPREMP,
-    SJF_PREMP,
-    PRIORITY_NONPREMP,
-    PRIORITY_PREMP,
-    RR
+    FCFS = 0,
+    SJF_NONPREMP = 1,
+    SJF_PREMP = 2,
+    PRIORITY_NONPREMP = 3,
+    PRIORITY_PREMP = 4,
+    RR = 5
 } Sch_Alg;
 
-// definition of data records
+// Time-serial chart
 typedef struct __Chart_Node{
     int *pid_arrived, *pid_ready, *pid_wait;
     int size_arrived, size_ready, size_wait;
@@ -86,7 +93,9 @@ typedef struct __Chart_Node{
     int cpu_burst_left, io_burst_left;
 } Chart_Node;
 
+// PCB
 typedef struct __Record_Node{
+    int priority; // priority
     int progress; // indicate current burst
     int burst_remained; // current burst time remained
     int session_remained; // current session remained
@@ -96,20 +105,21 @@ typedef struct __Record_Node{
 
 typedef struct __Report{
     int total_time;
+    int n_process;
     Chart_Node *chart;
     Record_Node *record;
 }Report;
 
 void Increment_Waiting_Time(Report *r, P_Queue ready);
 Chart_Node Capture(P_Queue arrival, P_Queue ready, P_Queue wait, Report r, int pid_in_cpu, int pid_in_io);
-void Push_Ready_Queue(Report *r, P_Queue *ready, Process_List pl, int pid, int time, Sch_Alg sch_alg, int time_quantum);
-void Check_Preemption(Report *r, P_Queue *ready, Process_List pl, int *pid_in_cpu, Sch_Alg sch_alg);
-void Initialize_Scheduler(Report *r, P_Queue *arrival, P_Queue *ready, P_Queue *wait, Process_List pl);
-Report Scheduler(Process_List pl, Sch_Alg sch_alg, int time_quantum);
-void Release_Report(Report *r);
+void Push_Ready_Queue(Report *r, P_Queue *ready, int pid, int time, Sch_Alg sch_alg, int time_quantum);
+void Check_Preemption(Report *r, P_Queue *ready, int *pid_in_cpu, Sch_Alg sch_alg);
+void Initialize_Scheduler(Report *r, P_Queue *arrival, P_Queue *ready, P_Queue *wait, Process_List pl, bool need_capture);
+Report Scheduler(Process_List pl, Sch_Alg sch_alg, int time_quantum, bool need_capture);
+void Release_Report(Report *r, bool need_capture);
 
 // evaluation
-#define MAX_GANTT_LENGTH 100
+#define MAX_GANTT_LENGTH 10000
 
 // Gantt chart
 typedef struct __Gantt_Node{
@@ -121,15 +131,37 @@ typedef struct __Gantt{
     Gantt_Node *chart;
 } Gantt;
 
+typedef struct _Analysis_Item{
+    double *avg_clf;
+    double avg;
+    double std;
+} Analysis_Item;
+
+typedef struct _Analysis{
+    int n_process;
+    Analysis_Item turnaround;
+    Analysis_Item waiting;
+} Analysis;
+
 Gantt Create_Gantt_Chart(Report r);
+void Generate_Analysis_Item(Analysis_Item *ai, int *data, Report r);
+Analysis Analyze(Report r);
 void Release_Gantt_Chart(Gantt *g);
+void Release_Analysis(Analysis *a);
 
-// debugging
-void Debug_Print_Processes(Process_List pl);
-void Debug_Print_P_Queue(P_Queue pq);
-void Debug_Print_Chart_Node(Chart_Node n, int t);
-void Debug_Print_Report(Report r);
-void Debug_Print_Gantt_Chart(Gantt g);
-void Debug_Print_Record(Report r, int n_process);
+// display function
+void Display_Processes(Process_List pl);
+void Display_P_Queue(P_Queue pq);
+void Display_Chart_Node(Chart_Node n, int t);
+void Display_Chart(Report r, int m, int M);
+void Display_Gantt_Chart(Gantt g, int m, int M);
+void Display_Record(Report r);
+void Display_Analysis_item(Analysis_Item ai);
+void Display_Analysis(Analysis a);
 
+// interface
+bool Select_Again();
+int Select_Number(char* message, int m, int M);
+int Individual_Test();
+int Multiple_Test();
 #endif

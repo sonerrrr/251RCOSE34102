@@ -1,7 +1,8 @@
 #include "myheader.h"
 
 // diverse configuration with process type
-const int CPU_BURST_RANGE[3] = {30, 10, 5}; 
+const int CPU_BURST_LOWER_RANGE[3] = {10, 1, 1};
+const int CPU_BURST_UPPER_RANGE[3] = {50, 20, 5}; 
 const int IO_BURST_RANGE[3] = {0, 10, 30};
 const int IO_TIME_LOWER_RANGE[3] = {0, 1, 3};
 const int IO_TIME_UPPER_RANGE[3] = {0, 2, 5};
@@ -33,7 +34,7 @@ Process Generate_Process(P_Type p_type, int _pid){
     p.bursts = malloc(sizeof(int) * burst_length);
     for (int i=0; i<burst_length; i++){
         // alternating CPU burst time and IO burst time
-        if(i%2 == 0) p.bursts[i] = rand_int(1, CPU_BURST_RANGE[p_type]);
+        if(i%2 == 0) p.bursts[i] = rand_int(CPU_BURST_LOWER_RANGE[p_type], CPU_BURST_UPPER_RANGE[p_type]);
         else p.bursts[i] = rand_int(1, IO_BURST_RANGE[p_type]);
     }
 
@@ -56,30 +57,6 @@ Process_List Generate_Process_List(const int* p_type_dist, int n_process, int ra
     return pl;
 }
 
-/*Process Deep_Copy_Process(Process from){
-    Process p;
-
-    p.pid = from.pid;
-    p.io_time = from.io_time;
-    p.arrival_time = from.arrival_time;
-    p.priority = from.priority;
-    int burst_length = (p.io_time * 2) + 1;
-    p.bursts = malloc(sizeof(int) * burst_length);
-    for (int i=0; i<burst_length; i++) { p.bursts[i] = from.bursts[i];}
-
-    return p;
-}
-
-Process* Deep_Copy_Process_List(Process* from, int n_process){
-    Process* ps;
-
-    ps = malloc(sizeof(Process)* n_process);
-    for(int i=0; i<n_process; i++){ ps[i] = Deep_Copy_Process(from[i]); }
-
-    return ps;
-}*/
-
-// free all memory allocation during process generation
 void Release_Process_List(Process_List *pl){
     for(int i=0; i<pl->n_process; i++){
         free(pl->p_list[i].bursts);

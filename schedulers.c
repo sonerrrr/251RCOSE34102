@@ -32,7 +32,7 @@ Chart_Node Capture(P_Queue arrival, P_Queue ready, P_Queue wait, Report r, int p
 }
 
 // select key and session_remained value according to scheduling algorithm
-void Push_Ready_Queue(Report *r, P_Queue *ready, Process_List pl, int pid, int time, Sch_Alg sch_alg, int time_quantum){
+void Push_Ready_Queue(Report *r, P_Queue *ready, int pid, int time, Sch_Alg sch_alg, int time_quantum){
     switch(sch_alg){
         case FCFS:
             PQ_Push(ready, pid, time);
@@ -43,7 +43,7 @@ void Push_Ready_Queue(Report *r, P_Queue *ready, Process_List pl, int pid, int t
             break;
         case PRIORITY_NONPREMP:
         case PRIORITY_PREMP:
-            PQ_Push(ready, pid, pl.p_list[pid].priority);
+            PQ_Push(ready, pid, r->record[pid].priority);
             break;
         case RR:
             PQ_Push(ready, pid, time);
@@ -61,7 +61,7 @@ void Push_Ready_Queue(Report *r, P_Queue *ready, Process_List pl, int pid, int t
 }
 
 // check and perform preemption
-void Check_Preemption(Report *r, P_Queue *ready, Process_List pl, int *pid_in_cpu, Sch_Alg sch_alg){
+void Check_Preemption(Report *r, P_Queue *ready, int *pid_in_cpu, Sch_Alg sch_alg){
     if(*pid_in_cpu == -1 || PQ_isEmpty(*ready)) return;
 
     // p1: process running on CPU, p2: process on the top of ready queue
@@ -78,21 +78,23 @@ void Check_Preemption(Report *r, P_Queue *ready, Process_List pl, int *pid_in_cp
     }
 
     if(sch_alg == PRIORITY_PREMP){
-        if(pl.p_list[p1].priority > pl.p_list[p2].priority){
+        if(r->record[p1].priority > r->record[p2].priority){
             PQ_Pop(ready);
             *pid_in_cpu = p2;
             r->record[p2].session_remained = r->record[p2].burst_remained;
-            PQ_Push(ready, p1, pl.p_list[p1].priority);
+            PQ_Push(ready, p1, r->record[p1].priority);
         }
     }
 }
 
 // initialize main variables
-void Initialize_Scheduler(Report *r, P_Queue *arrival, P_Queue *ready, P_Queue *wait, Process_List pl){
+void Initialize_Scheduler(Report *r, P_Queue *arrival, P_Queue *ready, P_Queue *wait, Process_List pl, bool need_capture){
     r->total_time = 0;
-    r->chart = malloc(sizeof(Chart_Node)*MAX_CHART_LENGTH);
+    r->n_process = pl.n_process;
+    if(need_capture) r->chart = malloc(sizeof(Chart_Node)*MAX_CHART_LENGTH);
     r->record = malloc(sizeof(Record_Node)*pl.n_process);
     for(int i=0; i<pl.n_process; i++) {
+        r->record[i].priority = pl.p_list[i].priority;
         r->record[i].progress = 0;
         r->record[i].burst_remained = pl.p_list[i].bursts[0];
         r->record[i].session_remained = 0;
@@ -104,13 +106,13 @@ void Initialize_Scheduler(Report *r, P_Queue *arrival, P_Queue *ready, P_Queue *
     *wait = PQ_Create(pl.n_process);
 }
 
-Report Scheduler(Process_List pl, Sch_Alg sch_alg, int time_quantum){
+Report Scheduler(Process_List pl, Sch_Alg sch_alg, int time_quantum, bool need_capture){
     Report r;
     // arrival: presenting arrival of each process
     P_Queue arrival, ready, wait;
 
     // initialize report & queues
-    Initialize_Scheduler(&r, &arrival, &ready, &wait, pl);
+    Initialize_Scheduler(&r, &arrival, &ready, &wait, pl, need_capture);
 
     // generate arrival queue
     for(int i=0; i<pl.n_process; i++){ PQ_Push(&arrival, i, pl.p_list[i].arrival_time); }
@@ -153,7 +155,7 @@ Report Scheduler(Process_List pl, Sch_Alg sch_alg, int time_quantum){
                 }
             }
             // session ends: push to ready queue again
-            else Push_Ready_Queue(&r, &ready, pl, pid_in_cpu, time, sch_alg, time_quantum);
+            else Push_Ready_Queue(&r, &ready, pid_in_cpu, time, sch_alg, time_quantum);
             pid_in_cpu = -1;
         }
 
@@ -164,16 +166,16 @@ Report Scheduler(Process_List pl, Sch_Alg sch_alg, int time_quantum){
             int burst = pl.p_list[pid_in_io].bursts[progress];
 
             r.record[pid_in_io].burst_remained = burst;
-            Push_Ready_Queue(&r, &ready, pl, pid_in_io, time, sch_alg, time_quantum);
-            Check_Preemption(&r, &ready, pl, &pid_in_cpu, sch_alg);
+            Push_Ready_Queue(&r, &ready, pid_in_io, time, sch_alg, time_quantum);
+            Check_Preemption(&r, &ready, &pid_in_cpu, sch_alg);
             pid_in_io = -1;
         }
 
          // migration from arrival to ready (condsider simulataneously arrived processes) 
          while(!PQ_isEmpty(arrival) && arrival.data[0].key == time){
             int arrived_pid = PQ_Pop(&arrival);
-            Push_Ready_Queue(&r, &ready, pl, arrived_pid, time, sch_alg, time_quantum);
-            Check_Preemption(&r, &ready, pl, &pid_in_cpu, sch_alg);
+            Push_Ready_Queue(&r, &ready, arrived_pid, time, sch_alg, time_quantum);
+            Check_Preemption(&r, &ready, &pid_in_cpu, sch_alg);
         }
 
         // load from ready/wait queue
@@ -181,7 +183,7 @@ Report Scheduler(Process_List pl, Sch_Alg sch_alg, int time_quantum){
         if(pid_in_io == -1 && !PQ_isEmpty(wait)) pid_in_io = PQ_Pop(&wait);
 
         // capture current situation
-        r.chart[time] = Capture(arrival, ready, wait, r, pid_in_cpu, pid_in_io);
+        if(need_capture) r.chart[time] = Capture(arrival, ready, wait, r, pid_in_cpu, pid_in_io);
 
         // time progress
         if(pid_in_cpu != -1){
@@ -202,15 +204,18 @@ Report Scheduler(Process_List pl, Sch_Alg sch_alg, int time_quantum){
     PQ_Delete(&ready);
     PQ_Delete(&wait);
 
+    if(time >= MAX_SIMULATION_TIME) printf("Max simulation time reached: %d\n", time);
     return r;
 }
 
-void Release_Report(Report *r){
-    for(int i=0; i<r->total_time; i++){
-        free(r->chart[i].pid_arrived);
-        free(r->chart[i].pid_ready);
-        free(r->chart[i].pid_wait);
+void Release_Report(Report *r, bool need_capture){
+    if(need_capture){
+        for(int i=0; i<r->total_time; i++){
+            free(r->chart[i].pid_arrived);
+            free(r->chart[i].pid_ready);
+            free(r->chart[i].pid_wait);
+        }
+        free(r->chart);
     }
-    free(r->chart);
     free(r->record);
 }
