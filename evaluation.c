@@ -1,31 +1,33 @@
 #include "myheader.h"
 
-Gantt Create_Gantt_Chart(Report r){
-    Gantt gantt;
-    gantt.chart = malloc(sizeof(Gantt_Node) * MAX_GANTT_LENGTH);
-    gantt.size = 0;
+void Open_Node(Gantt *g, int pid, int time){
+    g->chart[g->size].pid = pid;
+    g->chart[g->size].start = time;
+}
 
-    int pos = 0;
-    for(int i=0; i<r.total_time - 1; i++){
+void Close_Node(Gantt *g, int time){
+    g->chart[g->size].end = time;
+    g->size += 1;
+}
+
+Gantt Create_Gantt_Chart(Report r){
+    Gantt g;
+    g.chart = malloc(sizeof(Gantt_Node) * MAX_GANTT_LENGTH);
+    g.size = 0;
+
+    if(r.chart[0].pid_in_cpu != -1) Open_Node(&g, 0, 0);
+    for(int i=1; i<r.total_time - 1; i++){
         int p1 = r.chart[i].pid_in_cpu, p2 = r.chart[i+1].pid_in_cpu;
 
-        if(p1 == -1 && p2 != -1){
-            gantt.chart[gantt.size].pid = p2;
-            gantt.chart[gantt.size].start = i+1;
-        }
-        else if(p1 != -1 && p2 == -1){
-            gantt.chart[gantt.size].end = i+1;
-            gantt.size += 1;
-        }
+        if(p1 == -1 && p2 != -1) Open_Node(&g, p2, i+1);
+        else if(p1 != -1 && p2 == -1) Close_Node(&g, i+1);
         else if(p1 != p2){
-            gantt.chart[gantt.size].end = i+1;
-            gantt.size += 1;
-            gantt.chart[gantt.size].pid = p2;
-            gantt.chart[gantt.size].start = i+1;
+            Close_Node(&g, i+1);
+            Open_Node(&g, p2, i+1);
         }
     }
 
-    return gantt;
+    return g;
 }
 
 // analysis of each data (turnaround time, waiting time)

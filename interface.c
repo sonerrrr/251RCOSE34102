@@ -84,8 +84,8 @@ void Page_Select_Print(Report r, Gantt g, bool isGantt){
     int max_page;
     int now_page = 0;
                 
-    if(isGantt) max_page = g.size / line_per_page;
-    else max_page = r.total_time / line_per_page;
+    if(isGantt) max_page = (g.size - 1) / line_per_page;
+    else max_page = (r.total_time - 1) / line_per_page;
 
     while(true){
         bool escape = false;
@@ -179,7 +179,7 @@ int Individual_Test(){
                 Release_Report(&r, true);
                 Release_Gantt_Chart(&g);
                 Release_Analysis(&a);
-                printf("successfully release resoure of previous simualtion\n");
+                printf("successfully release resource of previous simualtion\n");
                 r = Scheduler(pl, (Sch_Alg) sch_alg, time_quantum, true);
                 printf("shceduling simulation done\n");
                 g = Create_Gantt_Chart(r);

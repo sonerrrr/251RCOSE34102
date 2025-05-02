@@ -30,14 +30,14 @@ void Display_Chart_Node(Chart_Node n, int t){
 }
 
 void Display_Chart(Report r, int m, int M){
-    printf("Time-Serial Chart (time %d - %d / %d):\n", m, M - 1, r.total_time);
+    printf("Time-Serial Chart (time %d - %d / %d):\n", m, M - 1, r.total_time - 1);
     for(int i=m; i<M; i++){
         Display_Chart_Node(r.chart[i], i);
     }
 }
 
 void Display_Gantt_Chart(Gantt g, int m, int M){
-    printf("Gantt chart (line %d - %d / %d):\n", m, M - 1, g.size);
+    printf("Gantt chart (line %d - %d / %d):\n", m, M - 1, g.size - 1);
     for(int i=m; i<M; i++){
         printf("pid: %d | start: %d | end: %d\n", g.chart[i].pid, g.chart[i].start, g.chart[i].end);
     }
@@ -47,7 +47,7 @@ void Display_Record(Report r){
     const int p_per_line = 10;
     int max_line = (r.n_process - 1) / p_per_line + 1;
 
-    printf("Total time: %d\n", r.total_time);
+    printf("Total time: %d\n", r.total_time - 1);
     for(int i=0; i<max_line; i++){
         printf("            pid  ");
         for(int j=i*p_per_line; j<min((i+1)*p_per_line, r.n_process); j++) printf("| %3d ", j);

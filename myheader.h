@@ -114,7 +114,7 @@ typedef struct __Report{
 void Increment_Waiting_Time(Report *r, P_Queue ready);
 Chart_Node Capture(P_Queue arrival, P_Queue ready, P_Queue wait, Report r, int pid_in_cpu, int pid_in_io);
 void Generate_Key(int *key, Report *r, int pid, int time, Sch_Alg sch_alg);
-void Push_Ready_Queue(Report *r, P_Queue *ready, int pid, int time, Sch_Alg sch_alg, int time_quantum);
+void Push_Queue(Report *r, P_Queue *ready, int pid, int time, Sch_Alg sch_alg, int time_quantum);
 void Check_Preemption(Report *r, P_Queue *ready, int *pid_in_cpu, int time, Sch_Alg sch_alg);
 void Initialize_Scheduler(Report *r, P_Queue *arrival, P_Queue *ready, P_Queue *wait, Process_List pl, bool need_capture);
 Report Scheduler(Process_List pl, Sch_Alg sch_alg, int time_quantum, bool need_capture);
