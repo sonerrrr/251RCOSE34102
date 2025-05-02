@@ -91,7 +91,7 @@ typedef struct __Chart_Node{
     int *pid_arrived, *pid_ready, *pid_wait;
     int size_arrived, size_ready, size_wait;
     int pid_in_cpu, pid_in_io;
-    int cpu_burst_left, io_burst_left;
+    int cpu_burst_remained, io_burst_remained;
 } Chart_Node;
 
 // PCB
@@ -117,7 +117,7 @@ void Generate_Key(int *key, Report *r, int pid, int time, Sch_Alg sch_alg);
 void Push_Queue(Report *r, P_Queue *ready, int pid, int time, Sch_Alg sch_alg, int time_quantum);
 void Check_Preemption(Report *r, P_Queue *ready, int *pid_in_cpu, int time, Sch_Alg sch_alg);
 void Initialize_Scheduler(Report *r, P_Queue *arrival, P_Queue *ready, P_Queue *wait, Process_List pl, bool need_capture);
-Report Scheduler(Process_List pl, Sch_Alg sch_alg, int time_quantum, bool need_capture);
+Report Schedule(Process_List pl, Sch_Alg sch_alg, int time_quantum, bool need_capture);
 void Release_Report(Report *r, bool need_capture);
 
 // evaluation

@@ -23,10 +23,10 @@ Chart_Node Capture(P_Queue arrival, P_Queue ready, P_Queue wait, Report r, int p
     for(int i=0; i<n.size_wait; i++) { n.pid_wait[i] = wait.data[i].pid; }
     n.pid_in_cpu = pid_in_cpu;
     n.pid_in_io = pid_in_io;
-    if(pid_in_cpu != -1) n.cpu_burst_left = r.record[pid_in_cpu].burst_remained;
-    else n.cpu_burst_left = 0;
-    if(pid_in_io != -1) n.io_burst_left = r.record[pid_in_io].burst_remained;
-    else n.io_burst_left = 0;
+    if(pid_in_cpu != -1) n.cpu_burst_remained = r.record[pid_in_cpu].burst_remained;
+    else n.cpu_burst_remained = 0;
+    if(pid_in_io != -1) n.io_burst_remained = r.record[pid_in_io].burst_remained;
+    else n.io_burst_remained = 0;
 
     return n;
 }
@@ -113,7 +113,7 @@ void Initialize_Scheduler(Report *r, P_Queue *arrival, P_Queue *ready, P_Queue *
     *wait = PQ_Create(pl.n_process);
 }
 
-Report Scheduler(Process_List pl, Sch_Alg sch_alg, int time_quantum, bool need_capture){
+Report Schedule(Process_List pl, Sch_Alg sch_alg, int time_quantum, bool need_capture){
     Report r;
     // arrival: presenting arrival of each process
     P_Queue arrival, ready, wait;

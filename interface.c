@@ -130,7 +130,7 @@ int Individual_Test(){
 
     Process_List pl = Generate_Process_List(P_TYPE_DIST[p_dist_type], n_process, time(NULL));
     printf("process generated\n");
-    Report r = Scheduler(pl, (Sch_Alg) sch_alg, time_quantum, true);
+    Report r = Schedule(pl, (Sch_Alg) sch_alg, time_quantum, true);
     printf("shceduling simulation done\n");
     Gantt g = Create_Gantt_Chart(r);
     printf("gantt chart generated\n");
@@ -180,7 +180,7 @@ int Individual_Test(){
                 Release_Gantt_Chart(&g);
                 Release_Analysis(&a);
                 printf("successfully release resource of previous simualtion\n");
-                r = Scheduler(pl, (Sch_Alg) sch_alg, time_quantum, true);
+                r = Schedule(pl, (Sch_Alg) sch_alg, time_quantum, true);
                 printf("shceduling simulation done\n");
                 g = Create_Gantt_Chart(r);
                 printf("gantt chart generated\n");
@@ -255,7 +255,7 @@ int Multiple_Test(){
         Process_List pl = Generate_Process_List(P_TYPE_DIST[p_dist_type], n_process, time(NULL)+i);
 
         for(int sch_alg=0; sch_alg<N_ALGORITHM; sch_alg++){
-            Report r = Scheduler(pl, (Sch_Alg)sch_alg, time_quantum, false);
+            Report r = Schedule(pl, (Sch_Alg)sch_alg, time_quantum, false);
             Analysis a = Analyze(r);
             
             Print_File(fps[2*sch_alg], a.turnaround, i);
