@@ -31,8 +31,9 @@ Chart_Node Capture(P_Queue arrival, P_Queue ready, P_Queue wait, Report r, int p
     return n;
 }
 
-// select key value according to scheduling algorithm
-void Generate_Key(int *key, Report *r, int pid, int time, Sch_Alg sch_alg){
+// select key and session_remained value according to scheduling algorithm
+void Push_Queue(Report *r, P_Queue *pq, int pid, int time, Sch_Alg sch_alg, int time_quantum){
+    int key[3];
     switch(sch_alg){
         // FCFS: eariler arrival time -> high priority / tie-breaker: smaller pid
         case FCFS:
@@ -53,13 +54,6 @@ void Generate_Key(int *key, Report *r, int pid, int time, Sch_Alg sch_alg){
             key[0] = time; key[1] = pid; key[2] = 0;
             break;
     }
-}
-
-// select key and session_remained value according to scheduling algorithm
-void Push_Queue(Report *r, P_Queue *pq, int pid, int time, Sch_Alg sch_alg, int time_quantum){
-    int key[3];
-
-    Generate_Key(key, r, pid, time, sch_alg);
     PQ_Push(pq, pid, key);
 
     // except RR: session time = remained burst time

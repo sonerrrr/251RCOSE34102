@@ -68,7 +68,7 @@ int Select_Scheduling_Algorithm(){
 
     while(true){
         Print_Strings(sch_alg_s, N_ALGORITHM);
-        printf("Select distribution type of processes: ");
+        printf("Select scheduling algorithm: ");
         scanf(" %d", &d);
         if(d < 1 || d > N_ALGORITHM){
             if(Select_Again()) continue;

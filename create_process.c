@@ -1,5 +1,10 @@
 #include "myheader.h"
 
+typedef enum _P_Type { CPU_BOUND = 0, MIXED = 1, IO_BOUND = 2 } P_Type;
+// process generation configuration
+// PRIORITY_RANGE: priority levels are 0 ~ n(PRIORITTY_RANGE), which means n+1 items needed when creating array.
+const int PRIORITY_RANGE = 5;
+const int ARRIVAL_RANGE = 50;
 // diverse configuration with process type
 const int CPU_BURST_LOWER_RANGE[3] = {10, 1, 1};
 const int CPU_BURST_UPPER_RANGE[3] = {50, 20, 5}; 

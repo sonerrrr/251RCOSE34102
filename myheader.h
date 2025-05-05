@@ -18,18 +18,8 @@ int get_first_child(int);
 int min(int, int);
 
 // processes
-typedef enum _P_Type { CPU_BOUND = 0, MIXED = 1, IO_BOUND = 2 } P_Type;
-// process generation configuration
-// PRIORITY_RANGE: priority levels are 0 ~ n(PRIORITTY_RANGE), which means n+1 items needed when creating array.
-#define PRIORITY_RANGE 5
-#define ARRIVAL_RANGE 30
-// diverse configuration with process type
-extern const int CPU_BURST_LOWER_RANGE[3]; 
-extern const int CPU_BURST_UPPER_RANGE[3];
-extern const int IO_BURST_RANGE[3];
-extern const int IO_TIME_LOWER_RANGE[3];
-extern const int IO_TIME_UPPER_RANGE[3];
 // composition scenario of p_types 
+extern const int PRIORITY_RANGE;
 extern const int P_TYPE_DIST[3][3];
 
 typedef struct __Process {
@@ -45,8 +35,6 @@ typedef struct __Process_list {
     Process* p_list;
 } Process_List;
 
-P_Type Generate_P_Type(const int*);
-Process Generate_Process(P_Type, int);
 Process_List Generate_Process_List(const int* p_type_dist, int n_process, int random_seed);
 void Release_Process_List(Process_List *pl);
 
@@ -65,9 +53,6 @@ typedef struct __P_Queue{
 
 P_Queue PQ_Create(int n_process);
 void PQ_Delete(P_Queue *pq);
-bool PQ_Compare_Key(int* l, int* r);
-void PQ_Node_Deep_Copy(PQ_Node *to, PQ_Node *from);
-void PQ_Swap(P_Queue *pq, int i1, int i2);
 void PQ_Push(P_Queue *pq, int _pid, int* _key);
 int PQ_Pop(P_Queue *pq);
 bool PQ_isEmpty(P_Queue pq);
@@ -111,12 +96,6 @@ typedef struct __Report{
     Record_Node *record;
 }Report;
 
-void Increment_Waiting_Time(Report *r, P_Queue ready);
-Chart_Node Capture(P_Queue arrival, P_Queue ready, P_Queue wait, Report r, int pid_in_cpu, int pid_in_io);
-void Generate_Key(int *key, Report *r, int pid, int time, Sch_Alg sch_alg);
-void Push_Queue(Report *r, P_Queue *ready, int pid, int time, Sch_Alg sch_alg, int time_quantum);
-void Check_Preemption(Report *r, P_Queue *ready, int *pid_in_cpu, int time, Sch_Alg sch_alg);
-void Initialize_Scheduler(Report *r, P_Queue *arrival, P_Queue *ready, P_Queue *wait, Process_List pl, bool need_capture);
 Report Schedule(Process_List pl, Sch_Alg sch_alg, int time_quantum, bool need_capture);
 void Release_Report(Report *r, bool need_capture);
 
@@ -146,7 +125,6 @@ typedef struct _Analysis{
 } Analysis;
 
 Gantt Create_Gantt_Chart(Report r);
-void Generate_Analysis_Item(Analysis_Item *ai, int *data, Report r);
 Analysis Analyze(Report r);
 void Release_Gantt_Chart(Gantt *g);
 void Release_Analysis(Analysis *a);

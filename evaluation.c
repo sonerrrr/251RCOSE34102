@@ -15,8 +15,8 @@ Gantt Create_Gantt_Chart(Report r){
     g.chart = malloc(sizeof(Gantt_Node) * MAX_GANTT_LENGTH);
     g.size = 0;
 
-    if(r.chart[0].pid_in_cpu != -1) Open_Node(&g, 0, 0);
-    for(int i=1; i<r.total_time - 1; i++){
+    if(r.chart[0].pid_in_cpu != -1) Open_Node(&g, r.chart[0].pid_in_cpu, 0);
+    for(int i=0; i<r.total_time - 1; i++){
         int p1 = r.chart[i].pid_in_cpu, p2 = r.chart[i+1].pid_in_cpu;
 
         if(p1 == -1 && p2 != -1) Open_Node(&g, p2, i+1);
